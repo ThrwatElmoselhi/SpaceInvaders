@@ -1,0 +1,314 @@
+.data
+screen: .word 0x10000000 	#Find where screen is located
+pixel: 	.word 1024		# total number of pixels (32x32)
+end:	.word 0x10000c0c 	# you lose if aliens reach this (address of cell #771)
+key:	.word 0xffff0004 	# Stores keyboard input
+red:	.word 0x00ff0000	# stores red (player's ship)
+blue:	.word 0x000000ff	# stores blue (bullet)
+black:	.word 0x00000000	# stores black (background)
+white:	.word 0x00ffffff	# stores white (aliens)
+yellow:	.word 0x00ffff00	# stores yellow (top bars)
+#count:	.word 0
+
+.text
+
+ main:
+ 
+ init:
+######### VARIABLE INITIALIZATION #########
+   
+ 	lw	$t0, screen 		#Pixel that is being drawn
+ 	lw	$t1, pixel		#How many pixels are left
+ 	lw	$t2, white	 	#Colour (white) 0x00RRGGBB
+ 	li	$v0, 32	
+	li	$a0, 9			# the amount of delay in each Alien movement
+	li	$t4, 1			# $t4 is used for direction: right =1, left =0
+
+
+
+
+goToTop:
+# PURPOSE: Send cursor to top of the screen
+
+	lw	$t0, screen
+	j	drawTopBars
+
+drawTopBars:
+# PURPOSE: Draw the borders on the top of the screen
+
+	lw	$t2, yellow		# load the color yellow into $t2
+ 	sw	$t2, ($t0) 		#Draw colour($t2) on address $t0
+	addi	$t0, $t0, 4 		#Move forward to last pixel on row
+	subi	$t1, $t1, 32 		#Used to make sure $t1 is not 0
+	
+	bgtz	$t1, drawTopBars 	#if greater than 0, loop
+	j	goToBottom 		#Go back to top of screen
+	
+goToBottom:
+# PURPOSE: Send the cursor to the bottom of the screen
+
+	addi	$t0, $t0, 3840
+	addi	$t1, $t1, 1024
+	j	drawBottomBar
+	
+drawBottomBar:
+# PURPOSE: Draw the bottom borders
+
+	lw	$t2, yellow		# load the color yellow into $t2
+ 	sw	$t2, ($t0) 		#Draw colour($t2) on address $t0
+	addi	$t0, $t0, 4		#Move forward to last pixel on row
+	subi	$t1, $t1, 32		#Used to make sure $t1 is not 0
+	
+	bgtz	$t1, drawBottomBar 	#if greater than 0, loop
+	j	goTo392 			#Go back to pixel in row 4 col 2
+	
+goTo392:
+# PUPROSE: Go to the address 392, (position of first alien to be drawn)
+
+	li	$t0, 0x10000188		# goto address 392
+	addi	$t1, $t1, 9
+	j	drawAliens1		# after the starting at point 42 start drawing aliens
+
+drawAliens1:
+# PURPOSE: Draw the first row of aliens
+
+	lw	$t2, white		# load the color white into $t2
+	sw	$t2, ($t0) 		#Draw colour($t2) on address $t0
+	addi	$t0, $t0, 8 		#Move forward to last pixel on row
+	subi	$t1, $t1, 1 		#Used to make sure $t1 is not 0
+	
+	bgtz	$t1, drawAliens1 	#if greater than 0, loop
+	j	gotoNRow 		#Go back to top of screen
+	
+gotoNRow:
+# PURSPOSE: Goes to the beginning of next alien row (Second row)
+	addi	$t0, $t0, 184	
+	addi	$t1, $t1, 9
+	j	drawAliens2
+	
+drawAliens2:
+# PURPOSE: Draws the second row of aliens
+
+	lw	$t2, white		# load the color white in t2
+	sw	$t2, ($t0) 		#Draw colour($t2) on address $t0
+	addi	$t0, $t0, 8 		#Move forward to last pixel on row
+	subi	$t1, $t1, 1 		#Used to make sure $t1 is not 0
+	
+	bgtz	$t1, drawAliens2 	#if greater than 0, loop
+	j	gotoNNRow 		#Go back to top of screen
+	 
+gotoNNRow:
+# PURPOSE: Goes to begininng of the third alien row
+
+	addi	$t0, $t0, 184
+	addi	$t1, $t1, 9
+	j	drawAliens3
+	
+drawAliens3:
+# PURPOSE: Draws the thrid row of aliens
+
+	lw	$t2, white		# load the color white in t2
+	sw	$t2, ($t0) 		#Draw colour($t2) on address $t0
+	addi	$t0, $t0, 8		#Move forward to last pixel on row
+	subi	$t1, $t1, 1 		#Used to make sure $t1 is not 0
+	
+	bgtz	$t1, drawAliens3 	#if greater than 0, loop
+	j	gotoNNNRow 		#Go back to top of screen	
+
+gotoNNNRow:
+# PURPOSE: Goes to the begininng of the fourth row
+
+	addi	$t0, $t0, 184
+	addi	$t1, $t1, 9
+	j	drawAliens4
+	
+drawAliens4:
+# PURPOSE: Draw the fourth row of aliens
+	lw	$t2, white		# load the color white in t2
+	sw	$t2, ($t0) 		#Draw colour($t2) on address $t0
+	addi	$t0, $t0, 8 		#Move forward to last pixel on row
+	subi	$t1, $t1, 1 		#Used to make sure $t1 is not 0
+	
+	bgtz	$t1, drawAliens4 	#if greater than 0, loop
+	j	gotoPlayer 		#Go back to top of screen	
+	
+
+########  GONNA GET RID OF ############
+gotoPlayer:
+	lw	$t0, screen
+	addi	$t0, $t0, 3516
+	addi	$t1, $t1, 4
+	j	drawPlayer
+	
+drawPlayer:
+	
+	lw	$t2, red		# load the color red in t2
+	sw	$t2, ($t0) 		#Draw colour($t2) on address $t0
+	
+	subi	$t1, $t1, 4 		#Used to make sure $t1 is not 0
+	
+	addi	$t0, $t0, 124
+	sw	$t2, ($t0)
+	addi	$t0, $t0, 4
+	sw	$t2, ($t0)
+	addi	$t0, $t0, 4
+	sw	$t2, ($t0)	
+	
+	bgtz	$t1, drawPlayer 	#if greater than 0, loop
+	j	movementIndicator 	#Go back to top of screen
+
+##########################################
+
+moveOneAlienR:
+# PURPOSE: Sets previous pixel to black and current to white
+
+	lw	$t2, white	 	# load in the color white to the register t2
+	sw	$t2, ($t0)		# color the current cell white (alien has now moved to the right)
+	subi	$t0, $t0, 4		# go back to the previous pixel (the white one, place of the original alien)
+	lw	$t2, black	 	# load in the color black to register t2
+	sw	$t2, ($t0)		# color the cell black (effectively "deleting" the alien, which is now located in the cell to the right)
+	subi	$t0, $t0, 4		# go to the next cell ( <- this direction)
+	subi	$t1, $t1, 2		# increment cells checked by 2 (since you looked at 2 cells so far)
+	j	moveAliensR		#go back to checking if the cell is white or not)
+	
+
+moveAliensR:
+# PURPOSE: Checks if current cell is alien
+
+	li	$t4, 1				# movement direction, 1 = right, 0 = left
+	beqz	$t1, sleep 			# if you've looped over every single pixel, go back to sleep (maybe needs checking?)
+	lw 	$t7, ($t0)	 		# store the color in t7
+	subi	$t0, $t0, 4 			# look at the previous cell
+	lw	$t6, ($t0) 			# store the color of the previous cell
+	addi	$t0, $t0, 4 			# go back to the original cell
+	beq	$t6, 0x00ffffff, moveOneAlienR 	# if the current pixel is white (an alien) go to moveOneAlien
+	
+	# if the current pixel is not white, go to the next cell (the next one over <- this way)
+	subi	$t0, $t0, 4			# if the previous cell isn't white, move to next cell ( <- this way)
+	subi	$t1, $t1, 1			# decerement cell count by 1
+	j	moveAliensR			# go back to checking if the cell is white or not
+			
+moveOneAlienL:
+# PURPOSE: Sets previous pixel to white and current pixel to black
+
+	lw	$t2, black		# Load black into register t2
+	sw	$t2, ($t0)		# Colour the current cell black(alien is deleted)
+	subi	$t0, $t0, 4		# Go to the next cell
+	lw	$t2, white		# Load white into register t2
+	sw	$t2, ($t0)		# Colour the cell white, (Moving alien to the left)
+	subi	$t0, $t0, 4		# Go to the next cell
+	subi	$t1, $t1, 2		# Imcrement cells checked by 2
+	j	moveAliensL
+			
+
+moveAliensL:
+# PURPOSE: Checks if current cell is alien
+	li	$t4, 0				# movement direction, 1 = right, 0 = left
+	beqz	$t1, sleep			# if you've looped over every single pixel, go back to sleep (maybe needs checking?)
+	lw 	$t7, ($t0)			# store the color in t7		
+	beq	$t7, 0x00ffffff, moveOneAlienL 	# if the current pixel is white (an alien) go to moveOneAlien
+	
+	# if the current pixel is not white, go to the next cell (the next one over <- this way)
+	subi	$t0, $t0, 4			# Moves cursor to the left
+	subi	$t1, $t1, 1			# Decrement cell count by 1 
+	j	moveAliensL			# go back to checking the cell
+
+movementIndicator:
+# PURPOSE: picks which way the aliens should move
+	lw	$t0, screen		#Resets cursor to bottom right of screen
+	addi	$t0, $t0, 4096
+	li	$t1, 1024		#Resets pixel count
+	beqz	$t4, moveAliensL	#Keeps aliens moving in the same direction
+	bgtz	$t4, moveAliensR
+
+
+cursorColumnSelection:
+# PURPOSE: selects the columns to check, if the aliens are moving left, checks left column, if right, checks right column
+	beqz	$t4, moveCursor136
+	bgtz	$t4, moveCursor252
+moveCursor252:
+# PURPOSE: moves the cursor to the rightmost column in the play area
+	lw	$t0, screen
+	li	$t1, 30 #pixel count (30 pixel (top to bottom is 32, -2 for the vorders))
+	addi	$t0, $t0, 248
+	j	checkColumn		
+
+moveCursor136:
+# PURPOSE: moves cursor to the leftmost column in the play area
+	lw	$t0, screen
+	li	$t1, 30 #pixel count (30 pixel (top to bottom is 32, -2 for the vorders))
+	addi	$t0, $t0, 132
+	j	checkColumn
+checkColumn:
+# PURPOSE: checks the column selected by moveCursor136 or moveCursor252
+	lw	$t8, end			#loads the cell that detects player loss
+	lw	$t7, ($t8) 			#store the color of that end cell
+	beq	$t7, 0x00ffffff, gameOverInit	#end the game if you find a white pixel
+	lw 	$t7, ($t0)			# load color of current cell into $t7
+	beq	$t7, 0x00ffffff, checkAlienDown	# if the cell is white, move it down
+	subi	$t1, $t1, 1			# reduce number of cells looked at by 1
+	addi	$t0, $t0, 128			# move to the next row in the column
+	bgtz	$t1, checkColumn		# if the number of cells looked at is not yet 0, check again
+	beqz	$t1, movementIndicator		# if the number of cells looked at is == 0, start moving the aliens
+	
+checkAlienDown:
+# PURPOSE: initiates downwards movement for aliens
+	lw	$t0, screen
+	addi	$t0, $t0, 4096 		#goes to bottom of 
+	li	$t1, 896		#sets the cell count to 1024-128, will cause errors otherwise 
+	j	moveAlienDown		#start moving the aliens
+	
+movementIndicator2:
+# PURPOSE: reverses alien direction directly after moving downwards
+	lw	$t0, screen		#Resets cursor to bottom right of screen
+	addi	$t0, $t0, 4096
+	li	$t1, 1024
+	beqz	$t4, moveAliensR	#if the previous flag was 0 (aliens moving left) start moving right
+	bgtz	$t4, moveAliensL	#if the previous flag was 1 (aliens moving right) start moving left
+	
+moveAlienDown:
+# PURPOSE: search the grid for aliens
+	beqz	$t1, movementIndicator2 	# once you are done moving the aliens down, reverse direction
+	subi	$t0, $t0, 128			# look at the cell above this one
+	lw	$t6, ($t0)			# store the color of the cell above
+	addi	$t0, $t0, 128			# go back to the previous cell
+	beq	$t6, 0x00ffffff, moveOneAlienD 	# if the previous pixel is an alien, move it down
+	bne	$t6, 0x00ffffff, moveDown	# else, look at the next pixel (<- this way)
+
+moveOneAlienD:
+# PURPOSE: move the alien down
+	li	$t2, 0x00ffffff
+	sw	$t2, ($t0)			# color the current cell white (alien has now moved down)
+	subi	$t0, $t0, 128
+	li	$t2, 0x00000000
+	sw	$t2, ($t0)			# color the previous cell black (alien has been removed from the previous position)
+	addi	$t0, $t0, 124
+	subi	$t1, $t1, 1
+	j	moveAlienDown			# keep moving the aliens down
+moveDown:
+# PURPOSE: move to next cell
+	subi	$t0, $t0, 4			# move to the next cell ( <- this way)
+	subi	$t1, $t1, 1
+	j	moveAlienDown			# go back to checkin whether the current cell is an alien
+
+gameOverInit:
+# PURPOSE: initialize game over sequence
+	li	$t1, 1024			# initialize game over sequence
+	lw	$t0, screen
+	j	gameOver
+		
+gameOver:
+# PURPOSE: draw entire screen in black and exit
+	li	$t2, 0x00000000
+ 	sw	$t2, ($t0) 		#Draw colour($t2) on address $t0
+	addi	$t0, $t0, 4 		#Move forward to last pixel on row
+	subi	$t1, $t1, 1 		#Used to make sure $t1 is not 0
+	bgtz	$t1, gameOver 		#if greater than 0, loop
+	j 	exit
+
+sleep:
+	syscall
+	j	cursorColumnSelection
+			
+exit:	li	$v0, 10 		#Terminate
+	syscall

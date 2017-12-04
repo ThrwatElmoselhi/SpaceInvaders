@@ -1,0 +1,118 @@
+.data
+screen: .word 0x10000000 #Find where screen is located
+pixel: 	.word 3096
+key:	.word 0xffff0004 #Stores keyboard input
+green:  .word 0x0000ff00
+red:	.word 0x00ff0000
+blue:	.word 0x000000ff
+black:	.word 0x00000000
+shipLocation:	.word 0x10000dbc
+rightBarrier:	.word 0x10000dfc
+leftBarrier:	.word 0x10000d84
+
+.text
+
+initialization:
+	lw	$s0, shipLocation 
+
+main:	
+	jal	player
+
+##########PLAYER BLOCK##############
+
+player:
+
+playerInit:
+#ADD BARRIERS
+#$t0	used to store key presses
+#$t1 	rightBarrier
+#$t2 	leftBarrier
+#$t3 	used as reset register for buttonPress function
+#$t4 	colour of player(green)
+#$t5 	is used as a counter 
+#$t6 	stores previous ship location for overwriting
+#$t7	stores the color black
+	
+	lw	$t0, key			# t0 storing keyboard input
+	lw	$t1, rightBarrier
+	lw	$t2, leftBarrier
+	li	$t3, 2				# Make t3 an unused value
+	lw	$t4, shipLocation		# This register used for storing previous ship location
+
+	# Storing return address 
+	addi	$sp, $sp, -4	
+	sw	$ra, 0($sp)			
+	
+playerMain:
+
+	lw	$t0, key 			# Updates key press
+	lw	$t0, ($t0)
+	
+	jal	checkCond
+	#jal	lives
+	#jal	collision
+	
+drawPlayer:
+
+	# Drawing the moved player ship	
+	lw	$t3, green
+	sw	$t3,($s0)
+	sw	$t3,124($s0)
+	sw	$t3,128($s0)
+	sw	$t3,132($s0)
+	
+	# Erasing the previous player ship
+	lw	$t3, black
+	sw	$t3, ($t4)
+	sw	$t3, 124($t4)
+	sw	$t3, 128($t4)
+	sw	$t3, 132($t4)
+	
+	# Restoring correct return address
+	lw	$ra, 0($sp)
+	jr	$ra
+	
+	
+########CHECK CONDITIONAL BLOCK###############
+#$t0 contains the key press
+#$t2 used as reset register for buttonPress function
+
+
+checkCond:
+		
+	beq	$t0, 0x00000020, condSpace 	# if else statements for keyboard input
+ 	beq	$t0, 0x00000061, condA
+ 	beq	$t0, 0x00000064, condD
+ 	beq	$t0, 0x0000001B, condEsc	# Escape, terminates the program
+	
+	jr	$ra
+
+condA:		
+ 	beq	$s0, $t2, endCon 		# Checking id hit the right barrier, jumps to the conditional escape
+ 	add	$t4, $s0, $zero
+ 	subi	$s0, $s0, 4			# Move character one unit to the right
+ 	j	buttonReset
+ 
+condD:
+	beq	$s0, $t1, endCon 		# Checking if hit the left barrier, jumps to the conditional escape
+	add	$t4, $s0, $zero
+ 	addi	$s0, $s0, 4			# Move character one unit to the left
+ 	j	buttonReset
+
+	
+condEsc:
+	j	exit
+
+endCon:
+	jr	$ra
+	
+buttonReset:
+
+	lw	$t3, 2
+	li	$a3, 0xffff0004  		# Store the key input address in a3
+	sw	$t3, 0($a3) 			# Change the input value to t3
+	jr	$ra
+			
+			
+exit:	li	$v0, 10 #Terminate
+	syscall

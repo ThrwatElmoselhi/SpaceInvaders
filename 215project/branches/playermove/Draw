@@ -1,0 +1,77 @@
+.data
+screen: .word 0x10000000 #Find where screen is located
+pixel: 	.word 1024
+key:	.word 0xffff0004 #Stores keyboard input
+green:  .word 0x0000ff00
+red:	.word 0x00ff0000
+blue:	.word 0x000000ff
+black:	.word 0x00000000
+guy:	.word 0x10000dbc
+rightBarrier:	.word 0x10000dfc
+leftBarrier:	.word 0x10000d84
+.text
+
+ main:
+ 
+	li	$s1, 2
+	li	$a3, 0xffff0000
+	#sw	$s1, 0($a3) 
+ 	lw	$s0, guy	
+ 	
+ draw:	lw	$t0, screen #Pixel that is being drawn
+ 	lw	$t1, pixel #How many pixels are left
+ 	li	$t2, 0x00000000 #Colour (Red) 0x00RRGGBB
+ 	lw	$t3, key #Load key in $t3
+ 	lw	$t3, ($t3) #Go to key address and load that 
+ 	beq	$t3, 0x00000077, condw #if else statements for keyboard input
+ 	beq	$t3, 0x00000061, conda
+ 	beq	$t3, 0x00000073, conds
+ 	beq	$t3, 0x00000064, condd
+ 	beq	$t3, 0x0000001B, condesc #Escape, terminates the program
+ 	
+ condw:	lw	$t2, black
+ 	j	endif
+ conda:	lw 	$t7, leftBarrier
+ 	beq	$s0, $t7, endif
+ 	subi	$s0, $s0, 4	# Move character one unit to the right
+ 	li	$s1, 2		# Make s1 an unused value
+	li	$a3, 0xffff0004 # Store the key input address in a3
+	sw	$s1, 0($a3) 	# Change the input value to s1
+ 	j	endif
+ conds:	lw	$t2, black
+ 	j	endif
+ condd:	lw 	$t7, rightBarrier
+ 	addi	$t6, $s0, 4
+ 	beq	$t6, $t7, endif
+ 	addi	$s0, $s0, 4	# Move character one unit to the right
+ 	li	$s1, 2		# Make s1 an unused value
+	li	$a3, 0xffff0004 # Store the key input address in a3
+	sw	$s1, 0($a3) 	# Change the input value to s1
+ 	j	endif
+condesc:j	exit
+endif:
+drawloop:
+	add	$t5, $t2, $zero # Set current color to a temp variable
+	beq  	$t0, $s0, drawGuy #If draw pixel is the guy's pixel, draw the dude
+	addi	$t6, $s0, 124
+	beq  	$t0, $t6, drawGuy #If draw pixel is the guy's pixel, draw the dude
+	addi	$t6, $t6, 4
+	beq  	$t0, $t6, drawGuy #If draw pixel is the guy's pixel, draw the dude
+	addi	$t6, $t6, 4
+	beq  	$t0, $t6, drawGuy #If draw pixel is the guy's pixel, draw the dude
+	sw	$t2, ($t0) #Draw colour($t2) on address $t1
+
+nextPixel:
+	addi	$t0, $t0, 4 #Move forward to next pixel
+	subi	$t1, $t1, 1 #Used to make sure $t1 is not 0
+	bgtz	$t1, drawloop #if greater than 0, loop
+	j	draw #Go back to top of screen
+	
+drawGuy:
+	lw	$t2, green
+	sw	$t2, ($t0) #Draw colour($t2) on address $t1
+	add	$t2, $t5, $zero
+	j	nextPixel
+	
+exit:	li	$v0, 10 #Terminate
+	syscall
